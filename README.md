@@ -1,0 +1,2 @@
+# prologjs
+Tiny Prolog interpreter
