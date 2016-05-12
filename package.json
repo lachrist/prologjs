@@ -6,7 +6,7 @@
 , "repository": "lachrist/prologjs"
 , "homepage": "http://github.com/lachrist/prologjs"
 , "license" : "MIT"
-, "files" : ["knowledge.js",  "main.js"]
+, "files" : ["knowledge.js",  "main.js", "parse.js", "print.js"]
 , "main": "main.js"
 , "keywords" : ["Prolog", "Declarative programming", "Iterator"]
 }
