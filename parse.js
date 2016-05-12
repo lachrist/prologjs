@@ -10,9 +10,34 @@
 var Parsec = require("parsecjs");
 var debug = Parsec.debug();
 
-var variable = debug(Parsec.then(Parsec.Spaces, Parsec.regex(/^[_A-Z][_0-9A-Za-z]*/)), "variable");
+//////////
+// Atom //
+//////////
 
-var atom = debug(Parsec.then(Parsec.Spaces, Parsec.choice([Parsec.Number, Parsec.DoubleQuotedString, Parsec.regex(/^[a-z][_0-9A-Za-z]*/)])), "atom");
+var atom = debug(Parsec.then(Parsec.Spaces, Parsec.choice([
+  Parsec.Number,
+  Parsec.DoubleQuotedString,
+  Parsec.regexp(/^[a-z][_0-9A-Za-z]*/)])), "atom");
+
+///////////////
+// Structure //
+///////////////
+
+var structures = [];
+
+var structure = debug(Parsec.choice(structures), "structure");
+
+//////////////
+// Variable //
+//////////////
+
+var variable = debug(Parsec.then(Parsec.Spaces, Parsec.regexp(/^[_A-Z][_0-9A-Za-z]*/)), "variable");
+
+structures.push(variable);
+
+//////////////
+// Compound //
+//////////////
 
 var compound = debug(Parsec.bind(atom,
   (functor) => Parsec.choice([
@@ -20,16 +45,44 @@ var compound = debug(Parsec.bind(atom,
       (arguments) => Parsec.then(Parsec.keyword(")"), Parsec.return([functor].concat(arguments))))),
     Parsec.return([functor])])), "compound");
 
-var structure = debug(Parsec.choice([variable, compound]), "structure");
+structures.push(compound);
 
-var body1 = debug(Parsec.then(Parsec.keyword("."), Parsec.return([])), "body1")
-var body2 = debug(Parsec.then(Parsec.keyword(":-"), Parsec.bind(Parsec.separate(compound, Parsec.keyword(",")),
-    (compounds) => Parsec.then(Parsec.keyword("."), Parsec.return(compounds)))), "body2");
+/////////////////////////////////////////////////////
+// List (syntactic sugar for nested calls to cons) //
+/////////////////////////////////////////////////////
 
-var body = debug(Parsec.choice([body1, body2]), "body");
+var desugar = (elements) => (tail) => {
+  var result = tail;
+  for (var i=elements.length-1; i>=0; i--)
+    result = ["cons", elements[i], result];
+  return result;
+}
+
+var tail = debug(Parsec.choice([
+  Parsec.then(Parsec.keyword("]"), Parsec.return(["nil"])),
+  Parsec.then(Parsec.keyword("|"), Parsec.bind(structure,
+    (tail) => Parsec.then(Parsec.keyword("]"), Parsec.return(tail))))]), "tail")
+
+var list = debug(Parsec.then(Parsec.keyword("["), Parsec.bind(Parsec.separate(structure, Parsec.keyword(",")),
+  (elements) => Parsec.lift(tail, desugar(elements)))), "list");
+
+structures.push(list);
+
+//////////
+// Rule //
+//////////
+
+var body = debug(Parsec.choice([
+  Parsec.then(Parsec.keyword("."), Parsec.return([])),
+  Parsec.then(Parsec.keyword(":-"), Parsec.bind(Parsec.separate(compound, Parsec.keyword(",")),
+    (compounds) => Parsec.then(Parsec.keyword("."), Parsec.return(compounds))))]), "body");
 
 var rule = debug(Parsec.bind(compound,
   (head) => Parsec.lift(body, Array.prototype.concat.bind([head]))), "rule");
+
+///////////////
+// Top level //
+///////////////
 
 var rules = debug(Parsec.many(rule), "rules");
 
@@ -40,6 +93,7 @@ var parsers = {
   structure: structure,
   rule: rule,
   rules: rules,
+  prolog: rules,
   query: compound
 };
 

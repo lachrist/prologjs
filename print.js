@@ -32,6 +32,7 @@ var printers = {
   structure: structure,
   rule: rule,
   rules: rules,
+  prolog: rules,
   query: structure
 }
 
