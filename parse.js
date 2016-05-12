@@ -10,7 +10,7 @@
 var Parsec = require("parsecjs");
 var debug = Parsec.debug();
 
-var variable = debug(Parsec.then(Parsec.Spaces, Parsec.regex(/^[A-Z][_0-9A-Za-z]*/)), "variable");
+var variable = debug(Parsec.then(Parsec.Spaces, Parsec.regex(/^[_A-Z][_0-9A-Za-z]*/)), "variable");
 
 var atom = debug(Parsec.then(Parsec.Spaces, Parsec.choice([Parsec.Number, Parsec.DoubleQuotedString, Parsec.regex(/^[a-z][_0-9A-Za-z]*/)])), "atom");
 

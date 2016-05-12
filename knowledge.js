@@ -8,7 +8,7 @@ var unify = (struct1, struct2, binding) => {
         return false;
       for (var i=1, l=struct1.length; i<l; i++)
         workers.push(struct1[i], struct2[i]);
-    } else {
+    } else if (struct1 !== "_" && struct2 !== "_") {
       if (Array.isArray(struct1))
         var tmp = struct1, struct1 = struct2, struct2 = tmp;
       if (contain(struct2, struct1)) {
